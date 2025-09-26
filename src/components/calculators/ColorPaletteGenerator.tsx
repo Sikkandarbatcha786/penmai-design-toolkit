@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { generatePaletteAction, type ColorPaletteState } from '@/app/actions';
 import { CalculatorCard } from './CalculatorCard';
 import { Input } from '@/components/ui/input';
@@ -24,7 +24,7 @@ function SubmitButton() {
 
 export default function ColorPaletteGenerator() {
   const initialState: ColorPaletteState = {};
-  const [state, dispatch] = useFormState(generatePaletteAction, initialState);
+  const [state, dispatch] = useActionState(generatePaletteAction, initialState);
   const { toast } = useToast();
 
   useEffect(() => {
