@@ -22,8 +22,10 @@ export default function PrintResolutionCalculator() {
   const [dpi, setDpi] = useState('');
   const [unit, setUnit] = useState('px');
   const [lastChanged, setLastChanged] = useState('px');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     setWidth('1050');
     setHeight('600');
     setDpi('300');
@@ -85,17 +87,17 @@ export default function PrintResolutionCalculator() {
         <div className="grid sm:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="dpi">DPI / PPI</Label>
-            <Input id="dpi" value={dpi} onChange={(e) => setDpi(e.target.value)} placeholder="e.g., 300" />
+            <Input id="dpi" value={isMounted ? dpi : ''} onChange={(e) => setDpi(e.target.value)} placeholder="e.g., 300" />
           </div>
         </div>
         <div className="grid sm:grid-cols-3 gap-4 items-end">
           <div className="space-y-2">
             <Label htmlFor="width">Width</Label>
-            <Input id="width" value={width} onChange={(e) => { setWidth(e.target.value); setLastChanged('width'); }} />
+            <Input id="width" value={isMounted ? width : ''} onChange={(e) => { setWidth(e.target.value); setLastChanged('width'); }} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="height">Height</Label>
-            <Input id="height" value={height} onChange={(e) => { setHeight(e.target.value); setLastChanged('height'); }} />
+            <Input id="height" value={isMounted ? height : ''} onChange={(e) => { setHeight(e.target.value); setLastChanged('height'); }} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="unit">Unit</Label>
