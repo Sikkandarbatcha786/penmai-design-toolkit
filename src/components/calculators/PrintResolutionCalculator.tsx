@@ -17,13 +17,19 @@ const presets = [
 const round = (num: number) => Math.round(num * 100) / 100;
 
 export default function PrintResolutionCalculator() {
-  const [width, setWidth] = useState('1050');
-  const [height, setHeight] = useState('600');
-  const [dpi, setDpi] = useState('300');
+  const [width, setWidth] = useState('');
+  const [height, setHeight] = useState('');
+  const [dpi, setDpi] = useState('');
   const [unit, setUnit] = useState('px');
   const [lastChanged, setLastChanged] = useState('px');
 
-  const calculateValues = useCallback((value: string, currentUnit: string, currentDpi: string, field: 'width' | 'height') => {
+  useEffect(() => {
+    setWidth('1050');
+    setHeight('600');
+    setDpi('300');
+  }, []);
+
+  const calculateValues = useCallback((value: string, currentUnit: string, currentDpi: string) => {
     const numValue = parseFloat(value) || 0;
     const numDpi = parseFloat(currentDpi) || 72;
 
@@ -41,12 +47,12 @@ export default function PrintResolutionCalculator() {
       return { px: round(pxValue), in: round(inValue), cm: numValue };
     }
   }, []);
-
+  
   const values = {
-    width: calculateValues(width, lastChanged === 'width' ? unit : 'px', dpi, 'width'),
-    height: calculateValues(height, lastChanged === 'height' ? unit : 'px', dpi, 'height')
+    width: calculateValues(width, lastChanged === 'width' ? unit : 'px', dpi),
+    height: calculateValues(height, lastChanged === 'height' ? unit : 'px', dpi)
   };
-
+  
   const getDisplayValue = (dimension: 'width' | 'height') => {
     if (unit === 'px') return values[dimension].px.toString();
     if (unit === 'in') return values[dimension].in.toString();
@@ -120,13 +126,13 @@ export default function PrintResolutionCalculator() {
         <div className="p-4 bg-muted/50 rounded-lg space-y-2">
             <h3 className="font-semibold text-lg">Calculated Dimensions</h3>
             <p className="text-sm text-muted-foreground">
-              {calculateValues(width, unit, dpi, 'width').px}px × {calculateValues(height, unit, dpi, 'height').px}px
+              {calculateValues(width, unit, dpi).px}px × {calculateValues(height, unit, dpi).px}px
             </p>
             <p className="text-sm text-muted-foreground">
-              {calculateValues(width, unit, dpi, 'width').in}" × {calculateValues(height, unit, dpi, 'height').in}"
+              {calculateValues(width, unit, dpi).in}" × {calculateValues(height, unit, dpi).in}"
             </p>
             <p className="text-sm text-muted-foreground">
-              {calculateValues(width, unit, dpi, 'width').cm}cm × {calculateValues(height, unit, dpi, 'height').cm}cm
+              {calculateValues(width, unit, dpi).cm}cm × {calculateValues(height, unit, dpi).cm}cm
             </p>
         </div>
       </div>
