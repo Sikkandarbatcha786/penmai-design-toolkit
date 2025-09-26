@@ -21,7 +21,7 @@ export default function PrintResolutionCalculator() {
   const [height, setHeight] = useState('');
   const [dpi, setDpi] = useState('');
   const [unit, setUnit] = useState('px');
-  const [lastChanged, setLastChanged] = useState('px');
+  const [lastChanged, setLastChanged] = useState<'width' | 'height' | 'dpi' | 'unit' | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function PrintResolutionCalculator() {
     setDpi('300');
   }, []);
 
-  const calculateValues = useCallback((value: string, currentUnit: string, currentDpi: string) => {
+  const getCalculatedValues = useCallback((value: string, currentUnit: string, currentDpi: string) => {
     const numValue = parseFloat(value) || 0;
     const numDpi = parseFloat(currentDpi) || 72;
 
@@ -50,16 +50,15 @@ export default function PrintResolutionCalculator() {
     }
   }, []);
   
-  const values = {
-    width: calculateValues(width, lastChanged === 'width' ? unit : 'px', dpi),
-    height: calculateValues(height, lastChanged === 'height' ? unit : 'px', dpi)
-  };
-  
-  const getDisplayValue = (dimension: 'width' | 'height') => {
-    if (unit === 'px') return values[dimension].px.toString();
-    if (unit === 'in') return values[dimension].in.toString();
-    return values[dimension].cm.toString();
-  };
+  const getDisplayValue = useCallback((dimension: 'width' | 'height') => {
+    const val = dimension === 'width' ? width : height;
+    const fromUnit = lastChanged === dimension ? unit : 'px';
+    const values = getCalculatedValues(val, fromUnit, dpi);
+    
+    if (unit === 'px') return values.px.toString();
+    if (unit === 'in') return values.in.toString();
+    return values.cm.toString();
+  }, [width, height, dpi, unit, lastChanged, getCalculatedValues]);
   
   const handlePreset = (preset: typeof presets[0]) => {
     const newDpi = preset.dpi || 300;
@@ -68,15 +67,33 @@ export default function PrintResolutionCalculator() {
       setWidth(preset.w_px.toString());
       setHeight(preset.h_px.toString());
       setUnit('px');
-      setLastChanged('px');
-    } else {
+      setLastChanged('unit'); // Treat preset as a unit change to recalculate
+    } else if (preset.w_in) {
       setWidth(preset.w_in.toString());
       setHeight(preset.h_in.toString());
       setUnit('in');
-      setLastChanged('in');
+      setLastChanged('unit'); // Treat preset as a unit change to recalculate
     }
   };
 
+  const calculatedWidth = getCalculatedValues(width, lastChanged === 'width' ? unit : 'px', dpi);
+  const calculatedHeight = getCalculatedValues(height, lastChanged === 'height' ? unit : 'px', dpi);
+
+  if (!isMounted) {
+    return (
+        <CalculatorCard
+        title="Print Resolution Calculator"
+        description="Calculate dimensions in pixels, inches, or centimeters based on DPI/PPI."
+      >
+        <div className="space-y-6">
+            <div className="h-10"></div>
+            <div className="h-10"></div>
+            <div className="h-10"></div>
+            <div className="h-10"></div>
+        </div>
+      </CalculatorCard>
+    );
+  }
 
   return (
     <CalculatorCard
@@ -87,26 +104,25 @@ export default function PrintResolutionCalculator() {
         <div className="grid sm:grid-cols-3 gap-4">
           <div className="space-y-2">
             <Label htmlFor="dpi">DPI / PPI</Label>
-            <Input id="dpi" value={isMounted ? dpi : ''} onChange={(e) => setDpi(e.target.value)} placeholder="e.g., 300" />
+            <Input id="dpi" value={dpi} onChange={(e) => { setDpi(e.target.value); setLastChanged('dpi'); }} placeholder="e.g., 300" />
           </div>
         </div>
         <div className="grid sm:grid-cols-3 gap-4 items-end">
           <div className="space-y-2">
             <Label htmlFor="width">Width</Label>
-            <Input id="width" value={isMounted ? width : ''} onChange={(e) => { setWidth(e.target.value); setLastChanged('width'); }} />
+            <Input id="width" value={width} onChange={(e) => { setWidth(e.target.value); setLastChanged('width'); }} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="height">Height</Label>
-            <Input id="height" value={isMounted ? height : ''} onChange={(e) => { setHeight(e.target.value); setLastChanged('height'); }} />
+            <Input id="height" value={height} onChange={(e) => { setHeight(e.target.value); setLastChanged('height'); }} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="unit">Unit</Label>
             <Select value={unit} onValueChange={(value) => {
-              const currentW = getDisplayValue('width');
-              const currentH = getDisplayValue('height');
+              setWidth(getDisplayValue('width'));
+              setHeight(getDisplayValue('height'));
               setUnit(value);
-              setWidth(currentW);
-              setHeight(currentH);
+              setLastChanged('unit');
             }}>
               <SelectTrigger id="unit">
                 <SelectValue placeholder="Select unit" />
@@ -128,13 +144,13 @@ export default function PrintResolutionCalculator() {
         <div className="p-4 bg-muted/50 rounded-lg space-y-2">
             <h3 className="font-semibold text-lg">Calculated Dimensions</h3>
             <p className="text-sm text-muted-foreground">
-              {calculateValues(width, unit, dpi).px}px × {calculateValues(height, unit, dpi).px}px
+              {calculatedWidth.px}px × {calculatedHeight.px}px
             </p>
             <p className="text-sm text-muted-foreground">
-              {calculateValues(width, unit, dpi).in}" × {calculateValues(height, unit, dpi).in}"
+              {calculatedWidth.in}" × {calculatedHeight.in}"
             </p>
             <p className="text-sm text-muted-foreground">
-              {calculateValues(width, unit, dpi).cm}cm × {calculateValues(height, unit, dpi).cm}cm
+              {calculatedWidth.cm}cm × {calculatedHeight.cm}cm
             </p>
         </div>
       </div>
